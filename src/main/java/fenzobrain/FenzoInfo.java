@@ -1,3 +1,5 @@
+package fenzobrain;
+
 import com.netflix.fenzo.ConstraintEvaluator;
 import com.netflix.fenzo.TaskRequest;
 import com.netflix.fenzo.VMTaskFitnessCalculator;
@@ -10,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FenzoInfo {
-    public static TaskRequest fromTaskInfo(Protos.TaskInfo taskInfo){
+    public static TaskRequest fromTaskInfo(final Protos.TaskInfo taskInfo){
         return new TaskRequest() {
             @Override
             public String getId() {
@@ -59,7 +61,7 @@ public class FenzoInfo {
         };
     }
 
-    public static VirtualMachineLease fromOffer(Protos.Offer offer){
+    public static VirtualMachineLease fromOffer(final Protos.Offer offer){
         return new VirtualMachineLease() {
             @Override
             public String getId() {

@@ -1,3 +1,5 @@
+package fenzobrain;
+
 import com.netflix.fenzo.*;
 import com.netflix.fenzo.functions.Action1;
 import org.apache.mesos.Protos;
@@ -28,11 +30,11 @@ public class FenzoBrain {
         try
         {
             while (true) {
-                System.out.println("FenzoBrain: collecting resource offers from Layer-X @ ip ");
+                System.out.println("fenzobrain.FenzoBrain: collecting resource offers from Layer-X @ ip ");
                 List<Protos.Offer> newOffers = layerXMessenger.getNewResourceOffers();
-                System.out.println("FenzoBrain: collecting pending tasks from Layer-X @ ip ");
+                System.out.println("fenzobrain.FenzoBrain: collecting pending tasks from Layer-X @ ip ");
                 List<Protos.TaskInfo> newTasks = layerXMessenger.getTasks();
-                System.out.println("FenzoBrain: scheduling " + newTasks.size() + " tasks across " + newOffers.size() + " offers...");
+                System.out.println("fenzobrain.FenzoBrain: scheduling " + newTasks.size() + " tasks across " + newOffers.size() + " offers...");
                 Map<String, Protos.TaskInfo> taskInfoMap = new HashMap<>();
                 List<TaskRequest> taskRequests = new ArrayList<>();
                 for (Protos.TaskInfo taskInfo : newTasks) {

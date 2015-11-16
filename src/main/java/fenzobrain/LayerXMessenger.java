@@ -1,3 +1,5 @@
+package fenzobrain;
+
 import com.google.gson.Gson;
 import org.apache.mesos.Protos;
 
