@@ -13,9 +13,15 @@ public class Brain {
     private static final Map<String, Protos.TaskInfo> runningTasks = new HashMap<>();
     private static final Map<String, Protos.TaskInfo> pendingTasks = new HashMap<>();
 
+    private static class LayerXException extends Exception{
+        public LayerXException(String msg){
+            super(msg);
+        }
+    }
+
     public static void notifyOfferReceived(Protos.Offer offer){
         String offerID = offer.getId().getValue();
-        if (pendingOffers.containsKey(offerID)) {
+        if (pendingOffers.containsKey(offerID) || usedOffers.containsKey(offerID)) {
             System.out.println("I already know about offer " + offerID);
             return;
         } else {
@@ -35,8 +41,7 @@ public class Brain {
 
     private static void runTask(BrainClient brainClient, String taskID, String offerID) throws Exception{
         if (!pendingTasks.containsKey(taskID) || !pendingOffers.containsKey(offerID)) {
-            System.out.println("I already know about task " + taskID);
-            throw new Exception("TRIED TO SCHEDULE SOMETHING THAT DOESNT EXIST");
+            throw new LayerXException("TRIED TO SCHEDULE SOMETHING THAT DOESNT EXIST");
         } else {
             Protos.Offer offer = pendingOffers.get(offerID);
             Protos.TaskInfo taskInfo = pendingTasks.get(taskID);
@@ -57,6 +62,8 @@ public class Brain {
                     public void call(VirtualMachineLease lease) {
                         System.out.println("Declining offer on " + lease.hostname());
                         try {
+//                            usedOffers.remove(lease.getOffer().getId().getValue());
+//                            pendingOffers.remove(lease.getOffer().getId().getValue());
                             brainClient.declineOffer(lease.getOffer());
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -70,8 +77,10 @@ public class Brain {
 
         //start listening server
         BrainServer brainServer = new BrainServer();
-        brainServer.run();
-
+        BrainServer.ServerThread runServerThread = new BrainServer.ServerThread(brainServer);
+        System.out.println("Starting server...: ");
+        runServerThread.start();
+        System.out.println("Server started...: ");
         //main loop
         try
         {
@@ -109,7 +118,11 @@ public class Brain {
                                 Protos.TaskInfo taskToLaunch = taskInfoMap.get(taskAssignmentResult.getTaskId());
                                 taskScheduler.getTaskAssigner().call(taskAssignmentResult.getRequest(), lease.hostname());
                                 System.out.println(stringBuilder.toString());
-                                runTask(brainClient, taskToLaunch.getTaskId().getValue(), lease.getOffer().getId().getValue());
+                                try {
+                                    runTask(brainClient, taskToLaunch.getTaskId().getValue(), lease.getOffer().getId().getValue());
+                                } catch (LayerXException e){
+                                    e.printStackTrace();
+                                }
                             }
                         }
                     }
@@ -119,10 +132,7 @@ public class Brain {
             }
         }
 
-        catch(InterruptedException|
-                IOException e
-                )
-
+        catch(InterruptedException| IOException e)
         {
             System.out.println("Shutting down!");
             throw e;
