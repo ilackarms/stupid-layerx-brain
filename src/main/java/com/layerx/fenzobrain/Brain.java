@@ -64,7 +64,6 @@ public class Brain {
                     }
                 })
                 .build();
-        final Map<String, String> launchedTasks = new HashMap<>();
 
         //register with layer-x
         brainClient.register();
@@ -108,12 +107,9 @@ public class Brain {
                             for (TaskAssignmentResult taskAssignmentResult : vmAssignmentResult.getTasksAssigned()) {
                                 stringBuilder.append(taskAssignmentResult.getTaskId()).append(", ");
                                 Protos.TaskInfo taskToLaunch = taskInfoMap.get(taskAssignmentResult.getTaskId());
-                                // remove task from pending tasks map and put into launched tasks map
-                                // (in real world, transition the task state)
-                                launchedTasks.put(taskAssignmentResult.getTaskId(), lease.hostname());
                                 taskScheduler.getTaskAssigner().call(taskAssignmentResult.getRequest(), lease.hostname());
                                 System.out.println(stringBuilder.toString());
-                                brainClient.scheduleTasks(taskToLaunch, lease.getOffer());
+                                runTask(brainClient, taskToLaunch.getTaskId().getValue(), lease.getOffer().getId().getValue());
                             }
                         }
                     }

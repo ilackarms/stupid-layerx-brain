@@ -28,7 +28,7 @@ public class BrainClient {
         ScheduleTaskRequest scheduleTaskRequest = new ScheduleTaskRequest(taskID, offerID);
         Gson gson = new Gson();
         String requestJson = gson.toJson(scheduleTaskRequest);
-        String response = httpPost(layerxURL, requestJson.getBytes());
+        String response = httpPost(layerxURL+SCHEDULE_PATH, requestJson.getBytes());
         System.out.println("ScheduleTasks response: "+response);
     }
 
@@ -36,8 +36,9 @@ public class BrainClient {
         RegisterBrainRequest registerBrainRequest = new RegisterBrainRequest(BRAIN_ID, BRAIN_URL);
         Gson gson = new Gson();
         String requestJson = gson.toJson(registerBrainRequest);
-        String response = httpPost(layerxURL, requestJson.getBytes());
-        System.out.println("ScheduleTasks response: "+response);
+        System.out.println("Register request: "+requestJson);
+        String response = httpPost(layerxURL+REGISTER_PATH, requestJson.getBytes());
+        System.out.println("Register response: "+response);
     }
 
     public void declineOffer(Protos.Offer offer) throws Exception {
@@ -71,9 +72,9 @@ public class BrainClient {
 
     //http utils
     private static String httpPost(String urlString, byte[] requestBody) throws IOException, UnirestException {
-        HttpResponse<JsonNode> jsonResponse = Unirest.post(urlString)
+        HttpResponse<String> stringResponse = Unirest.post(urlString)
                 .body(requestBody)
-                .asJson();
-        return jsonResponse.getBody().toString();
+                .asString();
+        return stringResponse.getBody();
     }
 }
