@@ -1,4 +1,4 @@
-package fenzobrain;
+package com.layerx.fenzobrain;
 
 import com.netflix.fenzo.ConstraintEvaluator;
 import com.netflix.fenzo.TaskRequest;

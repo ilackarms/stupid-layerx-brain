@@ -1,6 +1,7 @@
 to run
 
-`mvn package`
 ```
-java -cp target/fenzo-layerx-brain-1.0-SNAPSHOT.jar:lib/* fenzobrain.FenzoBrain
+mvn package
+mvn dependency:copy-dependencies -DoutputDirectory=libs/
+java -cp target/fenzo-layerx-brain-1.0-SNAPSHOT.jar:libs/* com.layerx.fenzobrain.Brain
 ```
