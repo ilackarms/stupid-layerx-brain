@@ -9,7 +9,7 @@ import java.util.*;
 
 public class Brain {
     private static final Map<String, Protos.Offer> pendingOffers = new HashMap<>();
-    //    private static final Map<String, Protos.Offer> usedOffers = new HashMap<>();
+    private static final Map<String, Protos.Offer> usedOffers = new HashMap<>();
     private static final Map<String, Protos.TaskInfo> runningTasks = new HashMap<>();
     private static final Map<String, Protos.TaskInfo> pendingTasks = new HashMap<>();
 
@@ -20,6 +20,9 @@ public class Brain {
     }
 
     public static void notifyOfferReceived(Protos.Offer offer) {
+//        System.out.println("OFFER RECEIVED: "+offer.getId().getValue());
+//        System.out.println("OFFER RECEIVED values: "+offer.toString());
+
         String offerID = offer.getId().getValue();
         if (pendingOffers.containsKey(offerID)) {
             System.out.println("I already know about offer " + offerID);
@@ -29,15 +32,17 @@ public class Brain {
     }
 
     public static void notifyTaskReceived(Protos.TaskInfo taskInfo) {
+//        System.out.println("TASK RECEIVED values: "+taskInfo.toString());
         String taskID = taskInfo.getTaskId().getValue();
         if (pendingTasks.containsKey(taskID)) {
-            System.out.println("I already know about task " + taskID);
+//            System.out.println("I already know about task " + taskID);
         } else {
             pendingTasks.put(taskID, taskInfo);
         }
     }
 
     private static void runTask(BrainClient brainClient, Protos.TaskInfo taskToLaunch, Protos.Offer offer) throws Exception {
+        System.out.println("Putting "+ taskToLaunch.getTaskId().getValue() + " on " + offer.getId().getValue());
         brainClient.scheduleTasks(taskToLaunch, offer);
         runningTasks.put(taskToLaunch.getTaskId().getValue(), taskToLaunch);
     }
@@ -51,13 +56,14 @@ public class Brain {
                         System.out.println("Declining offer on " + lease.hostname());
                         try {
 //                            usedOffers.remove(lease.getOffer().getId().getValue());
-//                            pendingOffers.remove(lease.getOffer().getId().getValue());
+//                            pendingOffers.remove(le)
                             brainClient.declineOffer(lease.getOffer());
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                 })
+                .withLeaseOfferExpirySecs(1000000000)
                 .build();
     }
 
@@ -94,8 +100,11 @@ public class Brain {
                 }
                 List<VirtualMachineLease> vmLeases = new ArrayList<>();
                 for (Protos.Offer offer : newOffers) {
-                    VirtualMachineLease vmLease = FenzoInfo.fromOffer(offer);
-                    vmLeases.add(vmLease);
+//                    if (!usedOffers.containsKey(offer.getId().getValue())) {
+                        VirtualMachineLease vmLease = FenzoInfo.fromOffer(offer);
+                        vmLeases.add(vmLease);
+                        usedOffers.put(offer.getId().getValue(), offer);
+//                    }
                 }
                 if (taskRequests.size() < 1 || vmLeases.size() < 1) {
                     System.out.println("Not enough offers or tasks to schedule anything.");
@@ -103,7 +112,19 @@ public class Brain {
                     continue;
                 }
 
-                SchedulingResult schedulingResult = taskScheduler.scheduleOnce(taskRequests, vmLeases);
+                SchedulingResult schedulingResult;
+
+                try {
+                    schedulingResult = taskScheduler.scheduleOnce(taskRequests, vmLeases);
+                } catch (IllegalStateException e) {
+                    System.out.println("Expiring all leases...");
+                    usedOffers.clear();
+                    pendingOffers.clear();
+                    taskScheduler.expireAllLeases();
+                    brainClient.rejectAllOffers();
+                    continue;
+                }
+
                 System.out.println("result=" + schedulingResult);
                 Map<String, VMAssignmentResult> resultMap = schedulingResult.getResultMap();
                 System.out.println("about to do stuff with result...");
@@ -112,15 +133,16 @@ public class Brain {
                     for (VMAssignmentResult vmAssignmentResult : resultMap.values()) {
                         System.out.println("parsing vmAssignment Result..." + vmAssignmentResult);
                         List<VirtualMachineLease> leasesUsed = vmAssignmentResult.getLeasesUsed();
-                        StringBuilder stringBuilder = new StringBuilder("Sending to Layer-X: " + leasesUsed.get(0).hostname() + " tasks ");
+//                        StringBuilder stringBuilder = new StringBuilder("Sending to Layer-X: " + leasesUsed.get(0).hostname() + " tasks ");
                         for (VirtualMachineLease lease : leasesUsed) {
                             for (TaskAssignmentResult taskAssignmentResult : vmAssignmentResult.getTasksAssigned()) {
-                                stringBuilder.append(taskAssignmentResult.getTaskId()).append(", ");
+//                                stringBuilder.append(taskAssignmentResult.getTaskId()).append(", ");
                                 Protos.TaskInfo taskToLaunch = taskInfoMap.get(taskAssignmentResult.getTaskId());
                                 taskScheduler.getTaskAssigner().call(taskAssignmentResult.getRequest(), lease.hostname());
-                                System.out.println(stringBuilder.toString());
+//                                System.out.println(stringBuilder.toString());
                                 try {
                                     runTask(brainClient, taskToLaunch, lease.getOffer());
+                                    taskScheduler.getTaskAssigner().call(taskAssignmentResult.getRequest(), lease.hostname());
                                 } catch (LayerXException e) {
                                     e.printStackTrace();
                                 }
@@ -131,12 +153,12 @@ public class Brain {
                 System.out.println("did i do anything?...");
 
                 //reset known stuff
-                pendingOffers.clear();
+//                pendingOffers.clear();
                 pendingTasks.clear();
 //                taskScheduler.expireAllLeases();
-                taskScheduler = initTaskScheduler(brainClient);
+//                taskScheduler = initTaskScheduler(brainClient);
 
-                Thread.sleep(1000);
+                Thread.sleep(500);
             }
         } catch (InterruptedException | IOException e) {
             System.out.println("Shutting down!");

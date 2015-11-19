@@ -24,7 +24,7 @@ public class BrainServer  {
                                 byte b = buffer.getByte(i);
                                 body[i] = b;
                             }
-                            System.out.println("Received offer: "+ body.toString());
+//                            System.out.println("Received offer: "+ body.toString());
                             Brain.notifyOfferReceived(Protos.Offer.parseFrom(body));
                             response.setStatus(new HttpResponseStatus(202, "offer accepted"));
                             response.respond();
@@ -43,7 +43,7 @@ public class BrainServer  {
                             byte b = buffer.getByte(i);
                             body[i] = b;
                         }
-                        System.out.println("Received task: "+ body.toString());
+//                        System.out.println("Received task: "+ body.toString());
                         Brain.notifyTaskReceived(Protos.TaskInfo.parseFrom(body));
                         response.setStatus(new HttpResponseStatus(202, "task accepted"));
                         response.respond();

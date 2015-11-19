@@ -26,7 +26,7 @@ public class FenzoInfo {
 
             @Override
             public double getCPUs() {
-                return getCpusFrom(taskInfo);
+                return getCpusFrom(taskInfo) + 0.01;
             }
 
             @Override
@@ -122,7 +122,7 @@ public class FenzoInfo {
 
     private static double getCpusFrom(Protos.Offer offer){
         for (Protos.Resource resource: offer.getResourcesList()){
-            if (resource.getName() == "cpus") {
+            if (resource.getName().contains("cpus")) {
                 return resource.getScalar().getValue();
             }
         }
@@ -131,7 +131,7 @@ public class FenzoInfo {
 
     private static double getMemFrom(Protos.Offer offer){
         for (Protos.Resource resource: offer.getResourcesList()){
-            if (resource.getName() == "mem") {
+            if (resource.getName().contains("mem")) {
                 return resource.getScalar().getValue();
             }
         }
@@ -140,7 +140,7 @@ public class FenzoInfo {
 
     private static double getDiskFrom(Protos.Offer offer){
         for (Protos.Resource resource: offer.getResourcesList()){
-            if (resource.getName() == "disk") {
+            if (resource.getName().contains("disk")) {
                 return resource.getScalar().getValue();
             }
         }
@@ -158,7 +158,7 @@ public class FenzoInfo {
     private static List<VirtualMachineLease.Range> getPortsFrom(Protos.Offer offer){
         List<VirtualMachineLease.Range> ranges = new ArrayList<>();
         for (Protos.Resource resource: offer.getResourcesList()){
-            if (resource.getName() == "ports") {
+            if (resource.getName().contains("ports")) {
                 for (Protos.Value.Range range : resource.getRanges().getRangeList()){
                     int beg = (int) range.getBegin();
                     int end = (int) range.getEnd();
@@ -172,35 +172,35 @@ public class FenzoInfo {
 
     private static double getCpusFrom(Protos.TaskInfo taskInfo){
         for (Protos.Resource resource: taskInfo.getResourcesList()){
-            if (resource.getName() == "cpus") {
+            if (resource.getName().contains("cpus")) {
                 return resource.getScalar().getValue();
             }
         }
-        return -1;
+        return 0.11;
     }
 
     private static double getMemFrom(Protos.TaskInfo taskInfo){
         for (Protos.Resource resource: taskInfo.getResourcesList()){
-            if (resource.getName() == "mem") {
+            if (resource.getName().contains("mem")) {
                 return resource.getScalar().getValue();
             }
         }
-        return -1;
+        return 16.1;
     }
 
     private static double getDiskFrom(Protos.TaskInfo taskInfo){
         for (Protos.Resource resource: taskInfo.getResourcesList()){
-            if (resource.getName() == "disk") {
+            if (resource.getName().contains("disk")) {
                 return resource.getScalar().getValue();
             }
         }
-        return -1;
+        return 0;
     }
 
     private static int getPortsFrom(Protos.TaskInfo taskInfo){
         double portCount = 0;
         for (Protos.Resource resource: taskInfo.getResourcesList()){
-            if (resource.getName() == "ports") {
+            if (resource.getName().contains("ports")) {
                 for (Protos.Value.Range range : resource.getRanges().getRangeList()){
                     portCount = 1 + range.getEnd() - range.getBegin();
                 }

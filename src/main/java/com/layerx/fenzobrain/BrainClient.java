@@ -14,6 +14,7 @@ public class BrainClient {
 
     private static final String API_PREFIX="/api/v1";
     private static final String REGISTER_PATH=API_PREFIX+"/register";
+    private static final String REJECT_OFFERS=API_PREFIX+"/reject_offers";
     private static final String SCHEDULE_PATH=API_PREFIX+"/schedule";
     private final String layerxURL;
 
@@ -38,6 +39,11 @@ public class BrainClient {
         System.out.println("Register request: "+requestJson);
         String response = httpPost(layerxURL+REGISTER_PATH, requestJson.getBytes());
         System.out.println("Register response: "+response);
+    }
+
+    public void rejectAllOffers() throws UnirestException, IOException {
+        String response = httpPost(layerxURL+REJECT_OFFERS, new byte[1]);
+        System.out.println("Reject offers response: "+response);
     }
 
     public void declineOffer(Protos.Offer offer) throws Exception {
