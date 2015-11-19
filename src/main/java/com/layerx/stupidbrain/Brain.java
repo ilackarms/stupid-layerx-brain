@@ -2,12 +2,18 @@ package com.layerx.stupidbrain;
 
 import org.apache.mesos.Protos;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Brain {
     private static final BlockingQueue<Protos.Offer> pendingOffers = new LinkedBlockingQueue<>();
     private static final BlockingQueue<Protos.TaskInfo> pendingTasks = new LinkedBlockingQueue<>();
+    private static final Map<String, String> knownTaskIds = new HashMap<>();
+    private static final Map<String, String> knownOfferIds = new HashMap<>();
 
     private static class LayerXException extends Exception {
         public LayerXException(String msg) {
@@ -16,17 +22,11 @@ public class Brain {
     }
 
     private static Boolean offerKnown(Protos.Offer offer){
-        for (Protos.Offer knownOffer : pendingOffers){
-            return knownOffer.getId().getValue().equals(offer.getId().getValue());
-        }
-        return false;
+        return knownOfferIds.containsKey(offer.getId().getValue());
     }
 
     private static Boolean taskKnown(Protos.TaskInfo taskInfo){
-        for (Protos.TaskInfo knownOffer : pendingTasks){
-            return knownOffer.getTaskId().getValue().equals(taskInfo.getTaskId().getValue());
-        }
-        return false;
+        return knownTaskIds.containsKey(taskInfo.getTaskId().getValue());
     }
 
     public static void notifyOfferReceived(Protos.Offer offer) {
@@ -37,6 +37,7 @@ public class Brain {
             System.out.println("I already know about offer " + offerID);
         } else {
             pendingOffers.offer(offer);
+            knownOfferIds.put(offerID, offerID);
         }
     }
 
@@ -47,12 +48,15 @@ public class Brain {
             System.out.println("I already know about task " + taskID);
         } else {
             pendingTasks.offer(taskInfo);
+            knownTaskIds.put(taskID, taskID);
         }
     }
 
-    private static void runTask(BrainClient brainClient, Protos.TaskInfo taskToLaunch, Protos.Offer offer) throws Exception {
-        System.out.println("Putting " + taskToLaunch.getTaskId().getValue() + " on " + offer.getId().getValue());
-        brainClient.scheduleTasks(taskToLaunch, offer);
+    private static void runTask(BrainClient brainClient, Protos.TaskInfo taskToLaunch, Protos.Offer acceptedOffer) throws Exception {
+        System.out.println("Putting " + taskToLaunch.getTaskId().getValue() + " on " + acceptedOffer.getId().getValue());
+        brainClient.scheduleTasks(taskToLaunch, acceptedOffer);
+        knownTaskIds.remove(taskToLaunch.getTaskId().getValue());
+        knownOfferIds.remove(acceptedOffer.getId().getValue());
     }
 
     public static void main(String[] args) throws Exception {
@@ -77,11 +81,13 @@ public class Brain {
                 Protos.TaskInfo taskToLaunch = pendingTasks.poll();
                 if (taskToLaunch == null) {
                     System.out.println("No more tasks to launch.");
+                    knownTaskIds.clear();
                     continue;
                 }
                 Protos.Offer chosenOffer = pendingOffers.poll();
                 if (chosenOffer == null) {
                     System.out.println("Don't have any offers to launch task "+taskToLaunch.getTaskId().getValue()+" on. Waiting...");
+                    knownOfferIds.clear();
                     continue;
                 }
                 if (StupidMatcher.matchOffer(taskToLaunch, chosenOffer)){
