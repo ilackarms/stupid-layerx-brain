@@ -1,4 +1,4 @@
-package com.layerx.fenzobrain;
+package com.layerx.stupidbrain;
 
 import com.google.gson.Gson;
 import com.mashape.unirest.http.HttpResponse;
@@ -9,7 +9,7 @@ import org.apache.mesos.Protos;
 import java.io.*;
 
 public class BrainClient {
-    private static final String BRAIN_ID="Fenzo-Brain";
+    private static final String BRAIN_ID="Stupid-Brain";
     private static final String BRAIN_URL="http://127.0.0.1:3001";
 
     private static final String API_PREFIX="/api/v1";
