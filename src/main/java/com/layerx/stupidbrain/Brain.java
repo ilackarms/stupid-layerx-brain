@@ -1,10 +1,7 @@
 package com.layerx.stupidbrain;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.mesos.Protos;
 
-import java.io.IOException;
-import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -82,17 +79,17 @@ public class Brain {
                     System.out.println("No more tasks to launch.");
                     continue;
                 }
-                Protos.Offer acceptedOffer = pendingOffers.poll();
-                if (acceptedOffer == null) {
+                Protos.Offer chosenOffer = pendingOffers.poll();
+                if (chosenOffer == null) {
                     System.out.println("Don't have any offers to launch task "+taskToLaunch.getTaskId().getValue()+" on. Waiting...");
                     continue;
                 }
-                runTask(brainClient, taskToLaunch, acceptedOffer);
+                if (StupidMatcher.matchOffer(taskToLaunch, chosenOffer)){
+                    runTask(brainClient, taskToLaunch, chosenOffer);
+                }
             }
         } catch (InterruptedException e) {
             System.out.println("Shutting down!");
         }
-
     }
-
 }
